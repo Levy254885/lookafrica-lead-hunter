@@ -1,0 +1,93 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Design tokens. Semantic names only; Tailwind maps them in tailwind.config.ts. */
+:root {
+  --bg: #fbfbfa;
+  --surface: #ffffff;
+  --surface-subtle: #f4f4f2;
+  --border: #e6e5e1;
+  --border-strong: #cfcdc7;
+  --text: #1a1a18;
+  --text-muted: #55544f;
+  --text-faint: #85837c;
+  --accent: #0b6b4d;
+  --accent-hover: #095740;
+  --accent-soft: #e5f2ec;
+  --on-accent: #ffffff;
+  --warn: #8a5a00;
+  --warn-soft: #fdf3dc;
+  --danger: #b3261e;
+  --danger-soft: #fbe9e7;
+  --info: #1f5f8b;
+  --info-soft: #e6f0f7;
+  --radius-sm: 4px;
+  --radius: 6px;
+  --radius-lg: 8px;
+  --focus: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
+  --row-h: 2.5rem;
+  --icon: 16px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #121211;
+    --surface: #191918;
+    --surface-subtle: #212120;
+    --border: #2d2d2b;
+    --border-strong: #42423f;
+    --text: #efeeea;
+    --text-muted: #b2b0a8;
+    --text-faint: #86847d;
+    --accent: #4fc79e;
+    --accent-hover: #6bd4b0;
+    --accent-soft: #14312a;
+    --on-accent: #0b1f18;
+    --warn: #e6b450;
+    --warn-soft: #33270e;
+    --danger: #f08077;
+    --danger-soft: #36201e;
+    --info: #7ab6e0;
+    --info-soft: #172a38;
+  }
+}
+
+html { color-scheme: light dark; }
+body { background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
+:focus-visible { outline: none; box-shadow: var(--focus); border-radius: var(--radius-sm); }
+
+@layer components {
+  .btn { @apply inline-flex h-9 items-center justify-center gap-2 whitespace-nowrap rounded border border-line-strong bg-surface px-3 text-sm font-medium text-ink transition-colors hover:bg-subtle disabled:cursor-not-allowed disabled:opacity-50; }
+  .btn-primary { @apply border-accent bg-accent text-on-accent hover:bg-accent-hover; }
+  .btn-danger { @apply border-danger text-danger hover:bg-danger-soft; }
+  .btn-ghost { @apply border-transparent bg-transparent hover:bg-subtle; }
+  .btn-sm { @apply h-8 px-2.5 text-xs; }
+  .input { @apply h-9 w-full rounded border border-line-strong bg-surface px-3 text-sm text-ink placeholder:text-faint disabled:opacity-60; }
+  textarea.input { @apply h-auto py-2; }
+  .label { @apply mb-1 block text-xs font-medium text-muted; }
+  .hint { @apply mt-1 text-xs text-faint; }
+  .panel { @apply rounded-lg border border-line bg-surface; }
+  .panel-head { @apply flex items-center justify-between gap-3 border-b border-line px-4 py-3; }
+  .panel-title { @apply text-sm font-semibold; }
+  .tbl { @apply w-full border-collapse text-sm; }
+  .tbl th { @apply border-b border-line bg-subtle px-3 py-2 text-left text-xs font-medium text-muted; }
+  .tbl td { @apply border-b border-line px-3 py-2 align-top; }
+  .tbl tr:last-child td { border-bottom: 0; }
+  .badge { @apply inline-flex items-center gap-1 rounded-sm border border-line bg-subtle px-1.5 py-0.5 text-xs font-medium text-muted; }
+  .badge-ok { @apply border-transparent bg-accent-soft text-accent; }
+  .badge-warn { @apply border-transparent bg-warn-soft text-warn; }
+  .badge-bad { @apply border-transparent bg-danger-soft text-danger; }
+  .badge-info { @apply border-transparent bg-info-soft text-info; }
+  .link { @apply text-accent underline underline-offset-2 hover:text-accent-hover; }
+  .alert { @apply flex gap-2 rounded border px-3 py-2 text-sm; }
+  .alert-info { @apply border-transparent bg-info-soft text-info; }
+  .alert-warn { @apply border-transparent bg-warn-soft text-warn; }
+  .alert-bad { @apply border-transparent bg-danger-soft text-danger; }
+  .alert-ok { @apply border-transparent bg-accent-soft text-accent; }
+  .container-page { @apply mx-auto w-full max-w-page px-4 sm:px-6; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
