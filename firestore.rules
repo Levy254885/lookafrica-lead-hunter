@@ -1,0 +1,129 @@
+rules_version = '2';
+
+// LOOK AFRICA Lead Hunter - Firestore security rules.
+//
+// Model: deny by default. All writes that affect entitlements, usage, payments, leads, audits,
+// drafts and activity go through trusted server code (Admin SDK, which bypasses these rules and
+// re-implements authorization itself). Browsers may read their own documents and update only a
+// small, validated set of profile fields on their own user document.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function emailVerified() {
+      return signedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isTeamMember(teamId) {
+      return teamId != null
+        && signedIn()
+        && exists(/databases/$(database)/documents/teams/$(teamId))
+        && request.auth.uid in get(/databases/$(database)/documents/teams/$(teamId)).data.memberIds;
+    }
+
+    // Private to the owner, or shared with the team named on the document.
+    function ownerOrTeam() {
+      return isOwner(resource.data.ownerId) || isTeamMember(resource.data.get('teamId', null));
+    }
+
+    // ---- users -----------------------------------------------------------
+    // Created by the server when a session is first established. Clients may only change
+    // profile fields. Plan, role and admin status never live in a client-writable field.
+    match /users/{uid} {
+      allow read: if isOwner(uid);
+      allow create: if false;
+      allow delete: if false;
+      allow update: if isOwner(uid)
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['displayName', 'country', 'services', 'updatedAt'])
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() <= 80
+        && request.resource.data.country is string
+        && request.resource.data.country.size() <= 2
+        && request.resource.data.services is list
+        && request.resource.data.services.size() <= 12
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    // ---- billing and entitlements: read-only for the owner ---------------
+    match /subscriptions/{uid} {
+      allow read: if isOwner(uid);
+      allow write: if false;
+    }
+
+    match /usage/{usageId} {
+      allow read: if signedIn() && resource.data.ownerId == request.auth.uid;
+      allow write: if false;
+    }
+
+    match /payments/{paymentId} {
+      allow read: if signedIn() && resource.data.uid == request.auth.uid;
+      allow write: if false;
+    }
+
+    // ---- workspace data: read for owner or team, server-only writes ------
+    match /leads/{leadId} {
+      allow read: if ownerOrTeam();
+      allow write: if false;
+    }
+
+    match /audits/{auditId} {
+      allow read: if ownerOrTeam();
+      allow write: if false;
+    }
+
+    match /outreach/{outreachId} {
+      allow read: if ownerOrTeam();
+      allow write: if false;
+    }
+
+    match /savedSearches/{searchId} {
+      allow read: if isOwner(resource.data.ownerId);
+      allow write: if false;
+    }
+
+    match /suppressions/{suppressionId} {
+      allow read: if isOwner(resource.data.ownerId);
+      allow write: if false;
+    }
+
+    match /activityLogs/{logId} {
+      allow read: if ownerOrTeam();
+      allow write: if false;
+    }
+
+    match /teams/{teamId} {
+      allow read: if signedIn() && request.auth.uid in resource.data.memberIds;
+      allow write: if false;
+    }
+
+    // ---- shared, non-private caches --------------------------------------
+    // Public project listings are stored as metadata with a link to the original source.
+    match /projects/{projectId} {
+      allow read: if emailVerified();
+      allow write: if false;
+    }
+
+    // Plan configuration is readable by signed-in users so clients can render quotas.
+    // Quotas are always enforced server-side.
+    match /systemConfig/{docId} {
+      allow read: if signedIn() && docId == 'plans';
+      allow write: if false;
+    }
+
+    // ---- server-only collections ----------------------------------------
+    // webhookEvents, rateLimits, searchCache, jobs, adminAuditLogs, abuseReports, sourceState
+    // fall through to the catch-all below.
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

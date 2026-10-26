@@ -1,0 +1,47 @@
+{
+  "name": "look-africa-lead-hunter",
+  "version": "0.1.0",
+  "private": true,
+  "description": "LOOK AFRICA Lead Hunter - developer prospecting and client acquisition SaaS",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:rules": "firebase emulators:exec --only firestore --project demo-lookafrica \"vitest run --config vitest.rules.config.ts\"",
+    "test:e2e": "playwright test",
+    "emulators": "firebase emulators:start --only auth,firestore --project demo-lookafrica",
+    "set-admin": "tsx scripts/set-admin.ts"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "firebase": "^11.0.0",
+    "firebase-admin": "^13.0.0",
+    "lucide-react": "^0.460.0",
+    "next": "^15.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "server-only": "^0.0.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^4.0.0",
+    "@playwright/test": "^1.48.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "^15.0.0",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.14",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}
