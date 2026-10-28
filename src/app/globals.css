@@ -1,0 +1,147 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Design tokens. Palette: white, black, neutral grey, purple accent.
+ * --accent is for fills (buttons, bars). --accent-fg is for purple text and icons on the page
+ * background; it is lighter in dark mode so it keeps its contrast.
+ */
+:root {
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --surface-subtle: #f7f7f8;
+  --border: #e5e5e5;
+  --border-strong: #d0d0d0;
+  --text: #0d0d0d;
+  --text-muted: #5d5d5d;
+  --text-faint: #8f8f8f;
+  --accent: #5b2bd9;
+  --accent-hover: #4a1fb8;
+  --accent-soft: #f1ecfd;
+  --accent-fg: #5b2bd9;
+  --on-accent: #ffffff;
+  --sidebar: #fafaff;
+  --night: #14112b;
+  --warn: #3d3d3d;
+  --warn-soft: #efefef;
+  --danger: #b42318;
+  --danger-soft: #fdecea;
+  --info: #3d3d3d;
+  --info-soft: #f3f3f4;
+  --radius-sm: 4px;
+  --radius: 8px;
+  --radius-lg: 10px;
+  --focus: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent-fg);
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  --bg: #171717;
+  --surface: #212121;
+  --surface-subtle: #2a2a2a;
+  --border: #363636;
+  --border-strong: #4a4a4a;
+  --text: #ececec;
+  --text-muted: #b4b4b4;
+  --text-faint: #8a8a8a;
+  --accent: #6d3df0;
+  --accent-hover: #8458f5;
+  --accent-soft: #261c4d;
+  --accent-fg: #b9a2ff;
+  --on-accent: #ffffff;
+  --sidebar: #1c1c1c;
+  --night: #0d0b1f;
+  --warn: #e3e3e3;
+  --warn-soft: #333333;
+  --danger: #f4a3a0;
+  --danger-soft: #3b1f1e;
+  --info: #cfcfcf;
+  --info-soft: #2d2d2d;
+  color-scheme: dark;
+}
+
+/* Fallback when JavaScript has not set data-theme yet (or is disabled): follow the system. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --bg: #171717;
+    --surface: #212121;
+    --surface-subtle: #2a2a2a;
+    --border: #363636;
+    --border-strong: #4a4a4a;
+    --text: #ececec;
+    --text-muted: #b4b4b4;
+    --text-faint: #8a8a8a;
+    --accent: #6d3df0;
+    --accent-hover: #8458f5;
+    --accent-soft: #261c4d;
+    --accent-fg: #b9a2ff;
+    --on-accent: #ffffff;
+    --sidebar: #1c1c1c;
+    --night: #0d0b1f;
+    --warn: #e3e3e3;
+    --warn-soft: #333333;
+    --danger: #f4a3a0;
+    --danger-soft: #3b1f1e;
+    --info: #cfcfcf;
+    --info-soft: #2d2d2d;
+    color-scheme: dark;
+  }
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+body {
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+  border-radius: var(--radius-sm);
+}
+::selection {
+  background: var(--accent-soft);
+}
+
+@layer components {
+  .btn { @apply inline-flex h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded border border-line-strong bg-surface px-3 text-sm font-medium text-ink transition-colors hover:bg-subtle disabled:cursor-not-allowed disabled:opacity-50; }
+  .btn-primary { @apply border-accent bg-accent text-on-accent hover:bg-accent-hover; }
+  .btn-danger { @apply border-danger text-danger hover:bg-danger-soft; }
+  .btn-ghost { @apply border-transparent bg-transparent hover:bg-subtle; }
+  .btn-sm { @apply h-8 px-2.5 text-xs; }
+  .btn-icon { @apply w-9 px-0; }
+  .input { @apply h-9 w-full rounded border border-line-strong bg-surface px-2.5 text-sm text-ink placeholder:text-faint disabled:opacity-60; }
+  textarea.input { @apply h-auto py-1.5; }
+  .label { @apply mb-1 block text-xs font-medium text-muted; }
+  .hint { @apply mt-1 text-xs text-faint; }
+  .panel { @apply rounded-lg border border-line bg-surface; }
+  .panel-head { @apply flex items-center justify-between gap-3 border-b border-line px-4 py-2.5; }
+  .panel-title { @apply text-sm font-semibold; }
+  .tbl { @apply w-full border-collapse text-sm; }
+  .tbl th { @apply border-b border-line bg-subtle px-3 py-1.5 text-left text-xs font-medium text-muted; }
+  .tbl td { @apply border-b border-line px-3 py-1.5 align-top; }
+  .tbl tr:last-child td { border-bottom: 0; }
+  .badge { @apply inline-flex items-center gap-1 rounded-sm border border-line bg-subtle px-1.5 py-px text-xs font-medium text-muted; }
+  .badge-ok { @apply border-transparent bg-accent-soft text-accent-fg; }
+  .badge-warn { @apply border-transparent bg-warn-soft text-warn; }
+  .badge-bad { @apply border-transparent bg-danger-soft text-danger; }
+  .badge-info { @apply border-transparent bg-info-soft text-info; }
+  .link { @apply text-accent-fg underline underline-offset-2 hover:opacity-80; }
+  .alert { @apply flex gap-2 rounded border border-line px-3 py-2 text-sm; }
+  .alert-info { @apply bg-info-soft text-info; }
+  .alert-warn { @apply bg-warn-soft text-warn; }
+  .alert-bad { @apply border-transparent bg-danger-soft text-danger; }
+  .alert-ok { @apply border-transparent bg-accent-soft text-accent-fg; }
+  .container-page { @apply mx-auto w-full max-w-page px-4 sm:px-6; }
+  .tab { @apply inline-flex h-8 items-center gap-1.5 whitespace-nowrap rounded px-2.5 text-sm text-muted transition-colors hover:bg-subtle hover:text-ink; }
+  .tab[aria-selected='true'] { @apply bg-subtle font-medium text-ink; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
