@@ -3,6 +3,9 @@ import { parseJson, route } from '@/lib/api';
 import { searchLeads } from '@/lib/leads/service';
 import { requireFeature } from '@/lib/entitlements';
 
+/** Overpass can be slow; allow time for the fallback servers. */
+export const maxDuration = 60;
+
 const schema = z.object({
   country: z.string().length(2),
   city: z.string().min(2).max(60),
