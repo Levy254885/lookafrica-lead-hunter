@@ -6,6 +6,7 @@ import { Errors } from '@/lib/errors';
 import { rateLimit } from '@/lib/rate-limit';
 import { SESSION_COOKIE, SESSION_MAX_AGE_MS } from '@/lib/auth/session';
 import { ensureUserDoc } from '@/lib/users';
+import { log } from '@/lib/logger';
 
 const schema = z.object({ idToken: z.string().min(20).max(4096), displayName: z.string().max(80).optional() });
 
@@ -36,7 +37,11 @@ export async function POST(req: NextRequest) {
     });
     return res;
   } catch (err) {
-    if (err instanceof Error && /id-token|token|auth/i.test(err.message) && !(err as { status?: number }).status) {
+    const code = (err as { code?: string })?.code ?? '';
+    // Only genuine "bad or expired token" errors count as unauthenticated. Anything else is a server
+    // configuration problem (credentials, Firestore not created) and is logged for the operator.
+    if (/^auth\/(id-token-expired|id-token-revoked|argument-error|invalid-id-token|user-disabled|user-not-found)$/.test(code) && !(err as { status?: number }).status) {
+      log('warn', 'session_token_rejected', { code });
       return errorResponse(Errors.unauthenticated());
     }
     return errorResponse(err);
