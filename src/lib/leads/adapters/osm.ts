@@ -1,4 +1,5 @@
 import { Errors } from '@/lib/errors';
+import { log } from '@/lib/logger';
 import { CATEGORY_BY_ID, COUNTRIES, COUNTRY_LABEL } from '@/lib/leads/catalog';
 import { normalizeEmail, normalizePhone, normalizeWebsite } from '@/lib/leads/normalize';
 import type { LeadSourceAdapter, SearchParams, SourceStatus } from '@/lib/leads/adapters/types';
@@ -15,7 +16,33 @@ import type { LeadCandidate } from '@/lib/types';
  * by city and category and absence of a record or a website tag proves nothing.
  */
 
-const ENDPOINT = () => process.env.OVERPASS_URL || 'https://overpass-api.de/api/interpreter';
+const DEFAULT_ENDPOINTS = [
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.private.coffee/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter',
+];
+
+/**
+ * Endpoints to try, in order. OVERPASS_URL goes first when it is a valid URL (stray quotes, spaces or a
+ * pasted "OVERPASS_URL=" prefix are tolerated); the public mirrors follow so one busy server does not
+ * break search.
+ */
+export function overpassEndpoints(): string[] {
+  const raw = (process.env.OVERPASS_URL ?? '').trim().replace(/^OVERPASS_URL\s*=\s*/, '').replace(/^['"]|['"]$/g, '').trim();
+  const list: string[] = [];
+  if (raw) {
+    try {
+      const u = new URL(raw);
+      if (u.protocol === 'https:' || u.protocol === 'http:') list.push(u.toString());
+    } catch {
+      // Invalid value: ignore it and use the defaults.
+    }
+  }
+  for (const d of DEFAULT_ENDPOINTS) if (!list.includes(d)) list.push(d);
+  return list;
+}
+
+const ENDPOINT = () => overpassEndpoints()[0];
 const NAME_PATTERN = /^[\p{L}\p{N} '-]{2,60}$/u;
 
 export function sanitizeAreaName(raw: string): string {
@@ -104,33 +131,57 @@ export function elementToCandidate(
   };
 }
 
+const ATTEMPT_TIMEOUT_MS = 27_000;
+const TOTAL_BUDGET_MS = 50_000;
+
 async function runQuery(query: string): Promise<OsmElement[]> {
   const contact = process.env.APP_CONTACT_EMAIL ? ` (${process.env.APP_CONTACT_EMAIL})` : '';
-  let res: Response;
-  try {
-    res = await fetch(ENDPOINT(), {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/x-www-form-urlencoded',
-        'user-agent': `LookAfricaLeadHunter/1.0${contact}`,
-      },
-      body: `data=${encodeURIComponent(query)}`,
-      signal: AbortSignal.timeout(30_000),
-    });
-  } catch {
-    throw Errors.unavailable('source_unreachable', 'The OpenStreetMap data service could not be reached. Try again shortly.');
+  const started = Date.now();
+  let sawBusy = false;
+  let lastCause = 'no response';
+  for (const url of overpassEndpoints()) {
+    if (Date.now() - started > TOTAL_BUDGET_MS - 8_000) break;
+    const host = new URL(url).host;
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/x-www-form-urlencoded',
+          accept: 'application/json',
+          'user-agent': `LookAfricaLeadHunter/1.0${contact}`,
+        },
+        body: `data=${encodeURIComponent(query)}`,
+        signal: AbortSignal.timeout(Math.min(ATTEMPT_TIMEOUT_MS, TOTAL_BUDGET_MS - (Date.now() - started))),
+      });
+      if (res.status === 429 || res.status >= 500) {
+        sawBusy = true;
+        lastCause = `${host} answered HTTP ${res.status}`;
+        log('warn', 'overpass_busy', { host, status: res.status });
+        continue;
+      }
+      if (!res.ok) {
+        log('warn', 'overpass_rejected', { host, status: res.status });
+        throw Errors.unavailable('source_error', `The OpenStreetMap data service returned HTTP ${res.status}.`);
+      }
+      const json = (await res.json()) as { elements?: OsmElement[]; remark?: string };
+      if (json.remark && /runtime error|timed out|out of memory/i.test(json.remark)) {
+        sawBusy = true;
+        lastCause = `${host} could not finish the query in time`;
+        log('warn', 'overpass_remark', { host, remark: json.remark.slice(0, 200) });
+        continue;
+      }
+      return json.elements ?? [];
+    } catch (err) {
+      if (err instanceof Error && 'status' in err) throw err;
+      const e = err as { name?: string; message?: string; cause?: { code?: string } };
+      lastCause = `${host}: ${e.cause?.code ?? e.name ?? 'network error'}`;
+      log('warn', 'overpass_unreachable', { host, name: e.name, message: e.message, code: e.cause?.code });
+    }
   }
-  if (res.status === 429 || res.status === 504 || res.status === 503) {
-    throw Errors.unavailable('source_busy', 'The OpenStreetMap data service is busy. Wait a minute and try again.');
+  if (sawBusy) {
+    throw Errors.unavailable('source_busy', 'The OpenStreetMap data service is busy right now. Wait a minute and try again, or choose a narrower category.');
   }
-  if (!res.ok) {
-    throw Errors.unavailable('source_error', `The OpenStreetMap data service returned HTTP ${res.status}.`);
-  }
-  const json = (await res.json()) as { elements?: OsmElement[]; remark?: string };
-  if (json.remark && /runtime error|timed out|out of memory/i.test(json.remark)) {
-    throw Errors.unavailable('source_busy', 'The query was too large for the OpenStreetMap service. Narrow the area or category.');
-  }
-  return json.elements ?? [];
+  throw Errors.unavailable('source_unreachable', `The OpenStreetMap data service could not be reached (${lastCause}). Try again shortly.`);
 }
 
 export const osmAdapter: LeadSourceAdapter = {
