@@ -15,7 +15,7 @@ import { Loader2 } from 'lucide-react';
 import { Alert } from '@/components/ui';
 import { Logo } from '@/components/brand';
 import { ThemeToggle } from '@/components/theme-toggle';
-import { api } from '@/components/use-api';
+import { api, ClientApiError } from '@/components/use-api';
 import { getFirebaseAuth, isFirebaseConfigured } from '@/lib/firebase/client';
 
 type Mode = 'login' | 'signup' | 'reset';
@@ -32,6 +32,12 @@ const MESSAGES: Record<string, string> = {
 };
 
 function friendly(err: unknown): string {
+  if (err instanceof ClientApiError) {
+    if (err.status >= 500) {
+      return 'You signed in with Firebase, but the server could not start your session. This is a server setup problem, not a wrong password. Open /api/health?key=YOUR_CRON_SECRET to see what is missing.';
+    }
+    return err.message;
+  }
   const code = (err as { code?: string })?.code;
   if (code && MESSAGES[code]) return MESSAGES[code];
   if (err instanceof Error && !code) return err.message;
