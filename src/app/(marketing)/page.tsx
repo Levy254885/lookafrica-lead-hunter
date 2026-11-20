@@ -1,7 +1,8 @@
 import Link from 'next/link';
-import { ArrowRight, Briefcase, Check, Gauge, Mail, Search, Sparkles } from 'lucide-react';
+import { ArrowRight, Briefcase, Check, Gauge, KanbanSquare, Search } from 'lucide-react';
 import { MarketingShell } from '@/components/marketing/chrome';
-import { ProductPreview } from '@/components/marketing/product-preview';
+import { FlowersLeft, FlowersRight } from '@/components/marketing/hero-art';
+import { AuditDashboard, BusinessTable, OpportunityScanner, PipelineBoard, SampleNote } from '@/components/marketing/showcase';
 import { loadPlans } from '@/lib/entitlements';
 import { formatKes, PLAN_IDS } from '@/lib/plans';
 
@@ -17,80 +18,76 @@ const PLAN_BLURB: Record<string, string> = {
 /** These plan features are in the plan definition but not built yet (see PROGRESS.md), so the page says so. */
 const PLANNED = /project alerts|automated discovery|team workspace|shared pipeline|automation limits/i;
 
-const checks = ['Sourced business data', 'Website audits', 'Project opportunities', 'Evidence-based drafts'];
-
-const features = [
-  { icon: Search, t: 'Business Discovery', d: 'Find businesses by country, city and category. Each record shows its source and retrieval date.' },
-  { icon: Gauge, t: 'Website Audits', d: 'Check SEO, performance, accessibility and technical basics, with every finding tied to evidence.' },
-  { icon: Briefcase, t: 'Project Opportunities', d: 'Browse public project listings from permitted sources, with a link to the original.' },
-  { icon: Mail, t: 'Proposal Drafts', d: 'Draft messages from real findings on file. You review, edit and send them yourself.' },
+const tabs = [
+  { id: 'discover', icon: Search, label: 'Find businesses' },
+  { id: 'audits', icon: Gauge, label: 'Audit websites' },
+  { id: 'opportunities', icon: Briefcase, label: 'Spot opportunities' },
+  { id: 'pipeline', icon: KanbanSquare, label: 'Manage leads' },
 ];
+
+function Showcase({ id, kicker, title, text, children }: { id: string; kicker: string; title: string; text: string; children: React.ReactNode }) {
+  return (
+    <section id={id} className="scroll-mt-20">
+      <div className="container-page py-10 sm:py-14">
+        <div className="mx-auto max-w-2xl text-center">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted">{kicker}</p>
+          <h2 className="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl">{title}</h2>
+          <p className="mt-3 text-base leading-7 text-muted">{text}</p>
+        </div>
+        <div className="mt-8">{children}</div>
+        <SampleNote />
+      </div>
+    </section>
+  );
+}
 
 export default async function Home() {
   const plans = await loadPlans();
   return (
     <MarketingShell>
       {/* Hero */}
-      <section className="overflow-hidden">
-        <div className="container-page grid items-center gap-10 py-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:py-14">
-          <div>
-            <p className="inline-flex items-center gap-1.5 rounded-full bg-accent-soft px-3 py-1 text-xs font-medium text-accent-fg">
-              <Sparkles size={13} aria-hidden="true" /> Smarter leads. Real opportunities.
-            </p>
-            <h1 className="mt-5 text-4xl font-extrabold tracking-tight sm:text-5xl">
-              Find real clients.
-              <br />
-              Audit their websites.
-              <br />
-              <span className="text-accent-fg">Win more projects.</span>
-            </h1>
-            <p className="mt-5 max-w-md text-base leading-7 text-muted">
-              LOOK AFRICA Lead Hunter helps you discover businesses, audit their websites and track public project opportunities, with the source and evidence shown on every record.
-            </p>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Link href="/signup" className="btn btn-primary h-11 px-5 text-sm">
-                Get Started Free <ArrowRight size={16} aria-hidden="true" />
-              </Link>
-              <Link href="/#pricing" className="btn h-11 px-5 text-sm">
-                View pricing
-              </Link>
-            </div>
-            <ul className="mt-6 grid max-w-md grid-cols-2 gap-x-6 gap-y-2 text-sm">
-              {checks.map((c) => (
-                <li key={c} className="flex items-center gap-2">
-                  <Check size={15} className="shrink-0 text-accent-fg" aria-hidden="true" />
-                  {c}
-                </li>
-              ))}
-            </ul>
+      <section className="px-3 pt-4 sm:px-6 sm:pt-6">
+        <div className="relative mx-auto max-w-[78rem] overflow-hidden rounded-[1.75rem] bg-subtle px-5 pb-14 pt-14 text-center sm:pb-20 sm:pt-20">
+          <FlowersLeft className="pointer-events-none absolute -bottom-6 -left-6 w-28 sm:-left-2 sm:w-52 lg:w-64" />
+          <FlowersRight className="pointer-events-none absolute -right-4 top-6 w-24 sm:right-0 sm:w-44 lg:w-52" />
+          <h1 className="relative mx-auto max-w-3xl text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-5xl lg:text-[3.5rem]">
+            Find the opportunities hiding in plain sight.
+          </h1>
+          <p className="relative mx-auto mt-5 max-w-lg text-sm leading-6 text-muted sm:text-base">
+            Discover businesses across Kenya, check their websites and see which digital services they may need. Every record shows its source and every finding shows its evidence.
+          </p>
+          <div className="relative mt-7 flex justify-center">
+            <Link href="/signup" className="btn btn-primary h-11 px-6 text-sm">
+              Start for free <ArrowRight size={16} aria-hidden="true" />
+            </Link>
           </div>
-          <ProductPreview />
+        </div>
+        <div className="mx-auto mt-6 flex max-w-[78rem] flex-wrap justify-center gap-2 pb-2">
+          {tabs.map((t) => (
+            <a key={t.id} href={`#${t.id}`} className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-subtle px-3.5 text-sm font-medium hover:bg-line">
+              <t.icon size={15} aria-hidden="true" /> {t.label}
+            </a>
+          ))}
         </div>
       </section>
 
-      {/* Features */}
-      <section id="features" className="border-t border-line">
-        <div className="container-page py-10">
-          <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-accent-fg">
-            <span className="h-0.5 w-5 bg-accent" aria-hidden="true" /> Everything you need
-          </p>
-          <h2 className="mt-2 text-3xl font-extrabold tracking-tight">Built for results, not busy work</h2>
-          <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-4 lg:gap-0 lg:divide-x lg:divide-line">
-            {features.map((f) => (
-              <div key={f.t} className="lg:px-6 lg:first:pl-0 lg:last:pr-0">
-                <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent-soft text-accent-fg">
-                  <f.icon size={18} aria-hidden="true" />
-                </span>
-                <h3 className="mt-3 text-sm font-bold">{f.t}</h3>
-                <p className="mt-1 text-sm text-muted">{f.d}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <div id="features">
+        <Showcase id="discover" kicker="Business discovery" title="A table of real businesses, with their source." text="Search by category and city. Each row records where it came from, whether a website was found, and a score that explains itself.">
+          <BusinessTable />
+        </Showcase>
+        <Showcase id="audits" kicker="Website intelligence" title="Audits where every finding has evidence." text="Speed, SEO, accessibility and technical basics are measured and shown with the page they apply to. Nothing is guessed.">
+          <AuditDashboard />
+        </Showcase>
+        <Showcase id="opportunities" kicker="Opportunities" title="See why a business ranks where it does." text="Observed gaps are listed separately from the services they might suggest. A gap is a reason to get in touch, not proof that someone wants to buy.">
+          <OpportunityScanner />
+        </Showcase>
+        <Showcase id="pipeline" kicker="Lead management" title="Move prospects from first look to won." text="Save leads, keep private notes, set follow-ups and draft messages from the findings on file. You review and send every message yourself.">
+          <PipelineBoard />
+        </Showcase>
+      </div>
 
       {/* Pricing */}
-      <section id="pricing" className="border-t border-line bg-sidebar">
+      <section id="pricing" className="scroll-mt-20 border-t border-line">
         <div className="container-page py-10">
           <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-accent-fg">
             <span className="h-0.5 w-5 bg-accent" aria-hidden="true" /> Pricing
