@@ -40,6 +40,9 @@ function friendly(err: unknown): string {
   }
   const code = (err as { code?: string })?.code;
   if (code && MESSAGES[code]) return MESSAGES[code];
+  if (err instanceof TypeError || (err instanceof Error && /failed to fetch|load failed|networkerror/i.test(err.message))) {
+    return 'Could not reach the server. Check your connection and try again. If it keeps happening, the site may be blocked by a VPN, ad blocker or firewall.';
+  }
   if (err instanceof Error && !code) return err.message;
   return 'Something went wrong. Please try again.';
 }
@@ -58,10 +61,16 @@ export function AuthForm({ mode }: { mode: Mode }) {
   const next = plan ? `/app/billing?plan=${encodeURIComponent(plan)}` : '/app';
 
   async function finish(user: Awaited<ReturnType<typeof signInWithEmailAndPassword>>['user'], displayName?: string) {
-    const idToken = await user.getIdToken(true);
-    await api('/api/session', 'POST', { idToken, displayName });
+    // The token was issued moments ago, so it does not need a forced refresh (that is another network call).
+    const idToken = await user.getIdToken();
+    // Starting the session is safe to repeat, so one retry covers a cold server or a dropped connection.
+    try {
+      await api('/api/session', 'POST', { idToken, displayName });
+    } catch (err) {
+      if (err instanceof ClientApiError) throw err;
+      await api('/api/session', 'POST', { idToken, displayName });
+    }
     router.replace(next);
-    router.refresh();
   }
 
   async function submit(e: React.FormEvent) {
@@ -78,9 +87,11 @@ export function AuthForm({ mode }: { mode: Mode }) {
       } else if (mode === 'signup') {
         if (password.length < 8) throw Object.assign(new Error(), { code: 'auth/weak-password' });
         const cred = await createUserWithEmailAndPassword(auth, email, password);
-        if (name.trim()) await updateProfile(cred.user, { displayName: name.trim().slice(0, 80) });
-        await sendEmailVerification(cred.user);
-        await finish(cred.user, name.trim() || undefined);
+        const display = name.trim().slice(0, 80) || undefined;
+        // Name and verification email are not needed to sign in, so they run in the background.
+        if (display) void updateProfile(cred.user, { displayName: display }).catch(() => undefined);
+        void sendEmailVerification(cred.user).catch(() => undefined);
+        await finish(cred.user, display);
       } else {
         const cred = await signInWithEmailAndPassword(auth, email, password);
         await finish(cred.user);
