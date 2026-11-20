@@ -1,5 +1,6 @@
 import { analyzeHtml, analyzeRobotsTxt } from '@/lib/audit/html';
 import { buildFindings, deriveOpportunities, summarize, type AuditInputs } from '@/lib/audit/findings';
+import { buildSignalFindings } from '@/lib/audit/signals';
 import { runPageSpeed } from '@/lib/audit/pagespeed';
 import { safeFetch, SafeFetchError, validatePublicUrl } from '@/lib/audit/ssrf';
 import type { Finding, OpportunityIndicator } from '@/lib/types';
@@ -107,6 +108,7 @@ export async function performAudit(inputUrl: string): Promise<AuditResult> {
   const pagespeedPromise = runPageSpeed(url);
 
   let main: AuditInputs['main'];
+  let signals: Finding[] = [];
   try {
     const res = await safeFetch(url, {
       maxBytes: 1_500_000,
@@ -115,6 +117,7 @@ export async function performAudit(inputUrl: string): Promise<AuditResult> {
     });
     const contentType = typeof res.headers['content-type'] === 'string' ? res.headers['content-type'] : null;
     const isHtml = contentType === null || /html/i.test(contentType);
+    if (isHtml) signals = buildSignalFindings({ checkedAt, finalUrl: res.finalUrl, headers: res.headers, html: res.body, truncated: res.truncated });
     main = {
       ok: true,
       finalUrl: res.finalUrl,
@@ -150,7 +153,7 @@ export async function performAudit(inputUrl: string): Promise<AuditResult> {
   }
 
   const pagespeed = await pagespeedPromise;
-  const findings = buildFindings({ checkedAt, main, httpRedirect, robots, sitemap, links, pagespeed });
+  const findings = [...buildFindings({ checkedAt, main, httpRedirect, robots, sitemap, links, pagespeed }), ...signals];
 
   return {
     checkedAt,
