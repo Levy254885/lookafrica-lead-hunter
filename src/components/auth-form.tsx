@@ -47,6 +47,20 @@ function friendly(err: unknown): string {
   return 'Something went wrong. Please try again.';
 }
 
+/** When Firebase reports a network failure, test whether this browser can reach Google's sign-in service at all. */
+async function networkHint(): Promise<string> {
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), 8000);
+  try {
+    await fetch('https://identitytoolkit.googleapis.com/', { mode: 'no-cors', signal: ctl.signal, cache: 'no-store' });
+    return 'Your connection can reach Google, so this is a Firebase setting. Check that this site address is listed under Authentication, Settings, Authorized domains, that NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN is your project .firebaseapp.com address, and that the API key has no restriction that blocks this site.';
+  } catch {
+    return 'This browser or network cannot reach Google sign-in (identitytoolkit.googleapis.com). Try mobile data instead of this Wi-Fi, turn off any VPN, ad blocker or DNS filter, and try again.';
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export function AuthForm({ mode }: { mode: Mode }) {
   const router = useRouter();
   const params = useSearchParams();
@@ -97,7 +111,9 @@ export function AuthForm({ mode }: { mode: Mode }) {
         await finish(cred.user);
       }
     } catch (err) {
-      setError(friendly(err));
+      const msg = friendly(err);
+      setError(msg);
+      if ((err as { code?: string })?.code === 'auth/network-request-failed') setError(`${msg} ${await networkHint()}`);
     } finally {
       setBusy(false);
     }
