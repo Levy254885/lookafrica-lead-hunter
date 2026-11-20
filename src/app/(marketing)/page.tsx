@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { ArrowRight, Briefcase, Check, Gauge, KanbanSquare, Search } from 'lucide-react';
 import { MarketingShell } from '@/components/marketing/chrome';
-import { FlowersLeft, FlowersRight } from '@/components/marketing/hero-art';
 import { AuditDashboard, BusinessTable, OpportunityScanner, PipelineBoard, SampleNote } from '@/components/marketing/showcase';
 import { loadPlans } from '@/lib/entitlements';
 import { formatKes, PLAN_IDS } from '@/lib/plans';
@@ -48,8 +47,6 @@ export default async function Home() {
       {/* Hero */}
       <section className="px-3 pt-4 sm:px-6 sm:pt-6">
         <div className="relative mx-auto max-w-[78rem] overflow-hidden rounded-[1.75rem] bg-subtle px-5 pb-14 pt-14 text-center sm:pb-20 sm:pt-20">
-          <FlowersLeft className="pointer-events-none absolute -bottom-6 -left-6 w-28 sm:-left-2 sm:w-52 lg:w-64" />
-          <FlowersRight className="pointer-events-none absolute -right-4 top-6 w-24 sm:right-0 sm:w-44 lg:w-52" />
           <h1 className="relative mx-auto max-w-3xl text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-5xl lg:text-[3.5rem]">
             Find the opportunities hiding in plain sight.
           </h1>
