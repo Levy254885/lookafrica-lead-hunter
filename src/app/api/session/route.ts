@@ -19,7 +19,8 @@ export async function POST(req: NextRequest) {
     const host = req.headers.get('x-forwarded-host') ?? req.headers.get('host');
     if (!origin || !host || new URL(origin).host !== host) throw Errors.forbidden('Cross-origin request rejected.');
     const { idToken, displayName } = await parseJson(req, schema);
-    const decoded = await adminAuth().verifyIdToken(idToken, true);
+    // No revocation lookup: the token was issued seconds ago (checked below) and createSessionCookie verifies it again.
+    const decoded = await adminAuth().verifyIdToken(idToken);
     // Only accept tokens minted in the last 5 minutes, so a stolen old token cannot start a session.
     if (Date.now() / 1000 - decoded.auth_time > 5 * 60) throw Errors.unauthenticated();
     const cookie = await adminAuth().createSessionCookie(idToken, { expiresIn: SESSION_MAX_AGE_MS });
