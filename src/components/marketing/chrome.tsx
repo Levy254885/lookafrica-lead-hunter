@@ -1,19 +1,22 @@
 import Link from 'next/link';
 import { Logo } from '@/components/brand';
-import { NavLinks } from '@/components/marketing/nav-links';
+import { SiteMenu } from '@/components/marketing/site-menu';
 import { ThemeToggle } from '@/components/theme-toggle';
 
 export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-20 border-b border-line bg-bg">
-      <div className="container-page flex h-16 items-center justify-between gap-4">
-        <Logo />
-        <nav aria-label="Main" className="hidden items-center gap-9 md:flex">
-          <NavLinks />
-        </nav>
+    <header className="sticky top-0 z-30 border-b border-line bg-bg">
+      <div className="container-page flex h-14 items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <Logo />
+          <SiteMenu />
+        </div>
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          <Link href="/login" className="btn btn-ghost">
+          <Link href="/pricing" className="btn btn-ghost hidden sm:inline-flex">
+            Pricing
+          </Link>
+          <Link href="/login" className="btn btn-ghost hidden sm:inline-flex">
             Sign in
           </Link>
           <Link href="/signup" className="btn btn-primary">
@@ -21,9 +24,6 @@ export function SiteHeader() {
           </Link>
         </div>
       </div>
-      <nav aria-label="Main mobile" className="container-page flex gap-5 overflow-x-auto border-t border-line md:hidden">
-        <NavLinks className="py-2.5" />
-      </nav>
     </header>
   );
 }
@@ -63,10 +63,10 @@ export function SiteFooter() {
 
 export function MarketingShell({ children }: { children: React.ReactNode }) {
   return (
-    <>
+    <div className="clay min-h-screen text-ink">
       <SiteHeader />
       <main id="main">{children}</main>
       <SiteFooter />
-    </>
+    </div>
   );
 }
