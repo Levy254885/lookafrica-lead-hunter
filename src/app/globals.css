@@ -145,3 +145,58 @@ body {
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }
+
+/* Chart palette for the admin console: four steps of the accent plus a neutral. */
+:root { --c1: #5b2bd9; --c2: #8f6af0; --c3: #c3b0f7; --c4: #dcdce2; }
+:root[data-theme='dark'] { --c1: #8458f5; --c2: #6d3df0; --c3: #4a3a92; --c4: #4a4a4a; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) { --c1: #8458f5; --c2: #6d3df0; --c3: #4a3a92; --c4: #4a4a4a; }
+}
+
+/*
+ * Public site palette: warm off-white, near-black type and black buttons, as in the Clay-style
+ * reference. Scoped to .clay so the signed-in app and admin console keep their own purple theme.
+ */
+.clay {
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --surface-subtle: #f1eee8;
+  --border: #e6e2da;
+  --border-strong: #d6d1c7;
+  --text: #0b0b0b;
+  --text-muted: #55524b;
+  --text-faint: #86827a;
+  --accent: #0b0b0b;
+  --accent-hover: #2a2a2a;
+  --accent-soft: #efece5;
+  --accent-fg: #0b0b0b;
+  --on-accent: #ffffff;
+  --sidebar: #f7f5f1;
+  --night: #0b0b0b;
+  background: #f4f2ee;
+}
+:root[data-theme='dark'] .clay {
+  --bg: #141413;
+  --surface: #1c1c1a;
+  --surface-subtle: #262522;
+  --border: #34322d;
+  --border-strong: #4a4740;
+  --text: #f3f1ec;
+  --text-muted: #b9b5aa;
+  --text-faint: #8c887e;
+  --accent: #f3f1ec;
+  --accent-hover: #ffffff;
+  --accent-soft: #2b2a26;
+  --accent-fg: #f3f1ec;
+  --on-accent: #0b0b0b;
+  --sidebar: #191917;
+  --night: #0b0b0b;
+  background: #0e0e0d;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) .clay {
+    --bg: #141413; --surface: #1c1c1a; --surface-subtle: #262522; --border: #34322d; --border-strong: #4a4740;
+    --text: #f3f1ec; --text-muted: #b9b5aa; --text-faint: #8c887e; --accent: #f3f1ec; --accent-hover: #ffffff;
+    --accent-soft: #2b2a26; --accent-fg: #f3f1ec; --on-accent: #0b0b0b; --sidebar: #191917; background: #0e0e0d;
+  }
+}
